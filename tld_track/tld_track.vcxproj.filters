@@ -1,0 +1,120 @@
+﻿<?xml version="1.0" encoding="utf-8"?>
+<Project ToolsVersion="4.0" xmlns="http://schemas.microsoft.com/developer/msbuild/2003">
+  <ItemGroup>
+    <Filter Include="源文件">
+      <UniqueIdentifier>{4FC737F1-C7A5-4376-A066-2A32D752A2FF}</UniqueIdentifier>
+      <Extensions>cpp;c;cc;cxx;def;odl;idl;hpj;bat;asm;asmx</Extensions>
+    </Filter>
+    <Filter Include="头文件">
+      <UniqueIdentifier>{93995380-89BD-4b04-88EB-625FBE52EBFB}</UniqueIdentifier>
+      <Extensions>h;hh;hpp;hxx;hm;inl;inc;xsd</Extensions>
+    </Filter>
+    <Filter Include="资源文件">
+      <UniqueIdentifier>{67DA6AB6-F800-4c08-8B7A-83BB121AAD01}</UniqueIdentifier>
+      <Extensions>rc;ico;cur;bmp;dlg;rc2;rct;bin;rgs;gif;jpg;jpeg;jpe;resx;tiff;tif;png;wav;mfcribbon-ms</Extensions>
+    </Filter>
+    <Filter Include="头文件\tld_track">
+      <UniqueIdentifier>{f37ec1f8-782b-4bb1-93cb-c91eba782c9a}</UniqueIdentifier>
+    </Filter>
+    <Filter Include="源文件\tld_track">
+      <UniqueIdentifier>{2ef798c2-6041-417a-9ccd-af7ea1d294de}</UniqueIdentifier>
+    </Filter>
+  </ItemGroup>
+  <ItemGroup>
+    <Text Include="ReadMe.txt" />
+  </ItemGroup>
+  <ItemGroup>
+    <ClInclude Include="tld_track.h">
+      <Filter>头文件</Filter>
+    </ClInclude>
+    <ClInclude Include="tld_trackDlg.h">
+      <Filter>头文件</Filter>
+    </ClInclude>
+    <ClInclude Include="stdafx.h">
+      <Filter>头文件</Filter>
+    </ClInclude>
+    <ClInclude Include="targetver.h">
+      <Filter>头文件</Filter>
+    </ClInclude>
+    <ClInclude Include="Resource.h">
+      <Filter>头文件</Filter>
+    </ClInclude>
+    <ClInclude Include="AMT.h">
+      <Filter>头文件\tld_track</Filter>
+    </ClInclude>
+    <ClInclude Include="CommonDef.h">
+      <Filter>头文件\tld_track</Filter>
+    </ClInclude>
+    <ClInclude Include="DetecterModule.h">
+      <Filter>头文件\tld_track</Filter>
+    </ClInclude>
+    <ClInclude Include="ExpertsModule.h">
+      <Filter>头文件\tld_track</Filter>
+    </ClInclude>
+    <ClInclude Include="LK.h">
+      <Filter>头文件\tld_track</Filter>
+    </ClInclude>
+    <ClInclude Include="SingleObject.h">
+      <Filter>头文件\tld_track</Filter>
+    </ClInclude>
+    <ClInclude Include="Track.h">
+      <Filter>头文件\tld_track</Filter>
+    </ClInclude>
+    <ClInclude Include="TrackerModule.h">
+      <Filter>头文件\tld_track</Filter>
+    </ClInclude>
+  </ItemGroup>
+  <ItemGroup>
+    <ClCompile Include="tld_track.cpp">
+      <Filter>源文件</Filter>
+    </ClCompile>
+    <ClCompile Include="tld_trackDlg.cpp">
+      <Filter>源文件</Filter>
+    </ClCompile>
+    <ClCompile Include="stdafx.cpp">
+      <Filter>源文件</Filter>
+    </ClCompile>
+    <ClCompile Include="AMT.cpp">
+      <Filter>源文件\tld_track</Filter>
+    </ClCompile>
+    <ClCompile Include="CommonDef.cpp">
+      <Filter>源文件\tld_track</Filter>
+    </ClCompile>
+    <ClCompile Include="DetecterModule.cpp">
+      <Filter>源文件\tld_track</Filter>
+    </ClCompile>
+    <ClCompile Include="ExpertsModule.cpp">
+      <Filter>源文件\tld_track</Filter>
+    </ClCompile>
+    <ClCompile Include="LK.cpp">
+      <Filter>源文件\tld_track</Filter>
+    </ClCompile>
+    <ClCompile Include="SingleObject.cpp">
+      <Filter>源文件\tld_track</Filter>
+    </ClCompile>
+    <ClCompile Include="tinyxml2.cpp">
+      <Filter>源文件\tld_track</Filter>
+    </ClCompile>
+    <ClCompile Include="Track.cpp">
+      <Filter>源文件\tld_track</Filter>
+    </ClCompile>
+    <ClCompile Include="TrackerModule.cpp">
+      <Filter>源文件\tld_track</Filter>
+    </ClCompile>
+  </ItemGroup>
+  <ItemGroup>
+    <ResourceCompile Include="tld_track.rc">
+      <Filter>资源文件</Filter>
+    </ResourceCompile>
+  </ItemGroup>
+  <ItemGroup>
+    <None Include="res\tld_track.rc2">
+      <Filter>资源文件</Filter>
+    </None>
+  </ItemGroup>
+  <ItemGroup>
+    <Image Include="res\tld_track.ico">
+      <Filter>资源文件</Filter>
+    </Image>
+  </ItemGroup>
+</Project>
