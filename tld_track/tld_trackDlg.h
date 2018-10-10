@@ -4,6 +4,38 @@
 
 #pragma once
 
+#include "AMT.h"
+#include <cv.h>
+#include <cxcore.h>
+
+#include <stdio.h>
+#include <time.h>
+
+#include <iostream>
+#include <io.h>
+#include <fstream>
+#include<string>
+#include <direct.h>
+#include <conio.h>
+#include <Windows.h>
+#include<vector>
+#include "tinyxml2.h"
+#include<opencv2\highgui.hpp>
+#include<opencv\cxcore.h>
+#include<cvaux.h>
+#include<cv.hpp>
+
+#include <stdlib.h>
+#include <crtdbg.h>
+
+using namespace std;
+
+#define window_name "SrcImg"
+#define MAX_OBJ_TRACKING 20
+#define MIN_RECT_WIDTH 10
+#define MIN_RECT_HEIGHT 10
+
+
 
 // Ctld_trackDlg 对话框
 class Ctld_trackDlg : public CDialogEx
@@ -25,6 +57,7 @@ public:
 protected:
 	HICON m_hIcon;
 
+
 	// 生成的消息映射函数
 	virtual BOOL OnInitDialog();
 	afx_msg void OnSysCommand(UINT nID, LPARAM lParam);
@@ -38,4 +71,7 @@ public:
 	afx_msg void OnBnClickedAddlabel();
 	afx_msg void OnBnClickedDeletelabel();
 	afx_msg void OnBnClickedMovelabel();
+	void run_tld();
+	CString FicowGetDirectory();
+	//void On_Mouse(int event, int x, int y, int flags, void* param);
 };
