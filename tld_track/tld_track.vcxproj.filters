@@ -63,6 +63,12 @@
     <ClInclude Include="TrackerModule.h">
       <Filter>头文件\tld_track</Filter>
     </ClInclude>
+    <ClInclude Include="CvvImage.h">
+      <Filter>头文件</Filter>
+    </ClInclude>
+    <ClInclude Include="TextDlg.h">
+      <Filter>头文件</Filter>
+    </ClInclude>
   </ItemGroup>
   <ItemGroup>
     <ClCompile Include="tld_track.cpp">
@@ -100,6 +106,12 @@
     </ClCompile>
     <ClCompile Include="TrackerModule.cpp">
       <Filter>源文件\tld_track</Filter>
+    </ClCompile>
+    <ClCompile Include="CvvImage.cpp">
+      <Filter>源文件</Filter>
+    </ClCompile>
+    <ClCompile Include="TextDlg.cpp">
+      <Filter>源文件</Filter>
     </ClCompile>
   </ItemGroup>
   <ItemGroup>

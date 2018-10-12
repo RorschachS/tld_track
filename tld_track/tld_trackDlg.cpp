@@ -6,6 +6,14 @@
 #include "tld_track.h"
 #include "tld_trackDlg.h"
 #include "afxdialogex.h"
+#include "CvvImage.h"
+#include "TextDlg.h"
+
+
+
+//Ctld_trackDlg* p_Dlg = NULL;
+void On_Mouse(int event, int x, int y, int flags, void* param);
+
 
 typedef struct RectArray
 {
@@ -50,6 +58,12 @@ IplImage* FrameImg = NULL;
 IplImage* FrameGray = NULL;
 IplImage* TempImg = NULL;
 clock_t TimeStamp;
+CvvImage cimg;
+HDC hDC;
+CDC *pDC;
+CRect DrawRect;
+
+CRect rect1;
 
 int track_object = 0;
 int object_num = 0;
@@ -61,6 +75,8 @@ int backproject_mode = 0;
 CvPoint pre_pt, end_pt;
 CvRect SelectRect;
 
+char file_path[200]="";
+CString save_path;
 
 inline void EnableMemLeakCheck()
 {
@@ -78,7 +94,12 @@ using namespace cv;
 
 
 
-void On_Mouse(int event, int x, int y, int flags, void* param);
+
+
+
+
+
+
 
 
 
@@ -144,6 +165,9 @@ BEGIN_MESSAGE_MAP(Ctld_trackDlg, CDialogEx)
 	ON_BN_CLICKED(Btn_AddLabel, &Ctld_trackDlg::OnBnClickedAddlabel)
 	ON_BN_CLICKED(Btn_DeleteLabel, &Ctld_trackDlg::OnBnClickedDeletelabel)
 	ON_BN_CLICKED(Btn_MoveLabel, &Ctld_trackDlg::OnBnClickedMovelabel)
+	ON_BN_CLICKED(IDABORT, &Ctld_trackDlg::OnBnClickedAbort)
+	ON_WM_TIMER()
+	
 END_MESSAGE_MAP()
 
 
@@ -180,6 +204,24 @@ BOOL Ctld_trackDlg::OnInitDialog()
 
 	// TODO: 在此添加额外的初始化代码
 	//
+	ShowWindow(SW_MAXIMIZE);
+		//pDC = GetDlgItem(IDC_PIC_SHOW)->GetDC();
+	//hDC = pDC->GetSafeHdc();
+	//GetDlgItem(IDC_PIC_SHOW)->GetClientRect(&DrawRect);
+	//pDC->SelectStockObject(NULL_BRUSH); //不使用画刷
+	
+	//****************test******************
+
+	CWnd  *pWnd1 = GetDlgItem(IDC_PIC_SHOW);//CWnd是MFC窗口类的基类,提供了微软基础类库中所有窗口类的基本功能。
+	pWnd1->GetClientRect(&rect1);//GetClientRect为获得控件相自身的坐标大小
+	namedWindow("src1", WINDOW_AUTOSIZE);//设置窗口名
+	HWND hWndl = (HWND)cvGetWindowHandle("src1");//hWnd 表示窗口句柄,获取窗口句柄
+	HWND hParent1 = ::GetParent(hWndl);//GetParent函数一个指定子窗口的父窗口句柄
+	::SetParent(hWndl, GetDlgItem(IDC_PIC_SHOW)->m_hWnd);
+	::ShowWindow(hParent1, SW_HIDE);//ShowWindow指定窗口中显示
+	
+
+	//*************************************
 
 	return TRUE;  // 除非将焦点设置到控件，否则返回 TRUE
 }
@@ -234,10 +276,18 @@ HCURSOR Ctld_trackDlg::OnQueryDragIcon()
 }
 
 
+void Ctld_trackDlg::DrawPicToHDC(IplImage * img, UINT ID)
+{
+	cimg.CopyOf(img);
+	cimg.DrawToHDC(hDC, &DrawRect);
+};
+
+
 void Ctld_trackDlg::run_tld()
 {
 	//cvNamedWindow("avi");
-	char* filename = "D:\\yolo\\videos\\test_video1.avi";
+	char* filename = file_path;
+	//char* filename = "D:\\yolo\\videos\\test_video1.avi";
 	CvCapture* pCapture = cvCreateFileCapture(filename);
 	//CvCapture* pCapture = cvCaptureFromCAM(0);
 
@@ -251,7 +301,7 @@ void Ctld_trackDlg::run_tld()
 		return;
 	}
 	int iScale = 1.0;
-	double BeginFrameIdx = 0;
+	double BeginFrameIdx = 3;
 	int iID = 0;
 
 	FrameCount = (int)cvGetCaptureProperty(pCapture, CV_CAP_PROP_FRAME_COUNT);// 视频总帧数
@@ -281,10 +331,10 @@ void Ctld_trackDlg::run_tld()
 	int iKey = 0, frameNum = 0;
 	CvFont font = cvFont(1, 1);   // init font
 								  //char text[256];
-	cvNamedWindow(window_name, 1);
+	//cvNamedWindow(window_name, 1);
 	cvSetMouseCallback(window_name, On_Mouse);
 	bool bPause = false; // 暂停标识
-	int iPauseKey;
+	int iPauseKey = 1;
 	double dProcTime = 0, dTime;
 	int iProcCount = 0;
 	for (;;)  //无限循环直到按下“ESC”退出
@@ -402,11 +452,15 @@ void Ctld_trackDlg::run_tld()
 		cvLine(FrameImg, cvPoint(boundLineX, 0), cvPoint(boundLineX, FrameImg->height - 1), cvScalar(255), 2, 8, 0);
 		cvLine(FrameImg, cvPoint(FrameImg->width - boundLineX, 0), cvPoint(FrameImg->width - boundLineX, FrameImg->height - 1), cvScalar(255), 2, 8, 0);
 		cvLine(FrameImg, cvPoint(0, boundLineY), cvPoint(FrameImg->width - 1, boundLineY), cvScalar(255), 2, 8, 0);
+		//cvShowImage(window_name, FrameImg);
 		cvShowImage(window_name, FrameImg);
+		//SetTimer(1, 1, NULL);
+		//DrawPicToHDC(FrameImg, IDC_PIC_SHOW);
+
 		if (bPause == false)
-			iPauseKey = cvWaitKey(10);
+			iPauseKey = cvWaitKey(10);     //播放
 		else
-			iPauseKey = cvWaitKey(0);
+			iPauseKey = cvWaitKey(0);      //暂停  
 
 		// 触发暂停  P或F1
 		if (80 == iPauseKey || 112 == iPauseKey)
@@ -497,9 +551,9 @@ void Ctld_trackDlg::run_tld()
 
 		}
 
-
-
-		string savefile = "D:\\tld_track\\tld_track_多目标\\tld_track\\Annotations/";
+		//string savefile = save_path.GetBuffer;// = (LPCTSTR)save_path;
+		string savefile = CT2A(save_path);
+		
 		//for (int x = 0; x < pRectList->mRectArrayList[j].name.length() - 4; ++x)
 		//{
 		//	filename += pRectList->mRectArrayList[j].name[x];
@@ -508,10 +562,9 @@ void Ctld_trackDlg::run_tld()
 		//}
 		savefile += ".xml";
 		xmlDoc.SaveFile(savefile.c_str());
-
-
-
-	}
+		
+		
+			}
 
 
 
@@ -534,7 +587,7 @@ void Ctld_trackDlg::run_tld()
 
 void On_Mouse(int event, int x, int y, int flags, void* param)
 {
-
+	//Ctld_trackDlg *pDlg = (Ctld_trackDlg*)p_Dlg;
 	if (event == CV_EVENT_LBUTTONDOWN)
 	{
 		pre_pt = cvPoint(x, y);
@@ -585,11 +638,34 @@ void On_Mouse(int event, int x, int y, int flags, void* param)
 					pRectList->mRectArrayList[i].isAnnotated = 1;
 
 
-					string label = "";
-					printf("输入label:");
-					cin >> label;
 
+					// TODO: Add your control notification handler code here
+					//DlgB dlgB;    // 新建B对话框的对象
+					//if (IDOK == dlgB.DoModal())
+					//{
+					//	m_strA = dlgB.m_strB;   // m_strA是a编辑框关联的变量，m_strB是b对话框关联的变量
+					//}
+					//UpdateData(FALSE);
+
+
+
+
+
+
+					CString temp_label = NULL;
+					TextDlg text_dlg;
+					if (text_dlg.DoModal() == IDOK)
+					{
+
+					//	CEdit* my_dlg = (CEdit*)GetDlgItem(text_dlg, IDC_EDIT1);
+					//	my_dlg->GetWindowText(temp_label);//->GetWindowText(label);
+						temp_label = text_dlg.get_text;
+					}
+					string label = CT2A(temp_label);
 					pRectList->mRectArrayList[i].label.assign(label, 0, sizeof(label));
+					
+					
+					//}
 
 					//pRectList->mRectArrayList[i].pos[0] = SelectRect.x + 0.5*SelectRect.width;
 					//pRectList->mRectArrayList[i].pos[1] = SelectRect.y + 0.5*SelectRect.height;
@@ -621,20 +697,21 @@ void Ctld_trackDlg::OnBnClickedOpen()
 {
 	// TODO: 在此添加控件通知处理程序代码
 
-	CString m_strFilePathName;
+	
 	// 存储最终文件路径
-	char fName[1024];
-	CFileDialog select_dlg(TRUE, NULL, NULL, OFN_HIDEREADONLY | OFN_OVERWRITEPROMPT, _T("All Files(*.mp4)|*.mp4|所有文件(*.*)|*.*|"), NULL);
+	//char fName[1024];
+	CString myPathName = NULL;
+	CFileDialog select_dlg(TRUE, NULL, NULL, OFN_HIDEREADONLY | OFN_OVERWRITEPROMPT, _T("All Files(*.avi)|*.avi|所有文件(*.*)|*.*|"), NULL);
 	if (select_dlg.DoModal())
 	{
-		m_strFilePathName = select_dlg.GetPathName();
+		myPathName = select_dlg.GetPathName();
 	}
 
-	int len = WideCharToMultiByte(CP_ACP, 0, m_strFilePathName, -1, NULL, 0, NULL, NULL);
+	int len = WideCharToMultiByte(CP_ACP, 0, myPathName, -1, NULL, 0, NULL, NULL);
 
-	WideCharToMultiByte(CP_ACP, 0, m_strFilePathName, -1, fName, len, NULL, NULL);
-
-	printf("fName = %s\n", fName);
+	WideCharToMultiByte(CP_ACP, 0, myPathName, -1, file_path, len, NULL, NULL);
+//	file_path = fName;
+//	printf("fName = %s\n", fName);
 
 	cvWaitKey(100);
 	//EnableMemLeakCheck();
@@ -670,15 +747,15 @@ void Ctld_trackDlg::OnBnClickedOpen()
 void Ctld_trackDlg::OnBnClickedSavepath()
 {
 	// TODO: 在此添加控件通知处理程序代码
-	CString save_path = FicowGetDirectory();
-	cvWaitKey(100);
+	save_path = FicowGetDirectory();
+	//cvWaitKey(100);
 	
 }
 
 CString Ctld_trackDlg::FicowGetDirectory()
 {
 	BROWSEINFO bi;
-	char name[MAX_PATH];
+//	char name[MAX_PATH];
 	ZeroMemory(&bi, sizeof(BROWSEINFO));
 	bi.hwndOwner = AfxGetMainWnd()->GetSafeHwnd();
 	bi.pszDisplayName = NULL;
@@ -687,20 +764,20 @@ CString Ctld_trackDlg::FicowGetDirectory()
 	LPITEMIDLIST idl = SHBrowseForFolder(&bi);
 	if (idl == NULL)
 		return NULL;
-	CString strDirectoryPath;
-	SHGetPathFromIDList(idl, strDirectoryPath.GetBuffer(MAX_PATH));
-	strDirectoryPath.ReleaseBuffer();
-	if (strDirectoryPath.IsEmpty())
+	
+	SHGetPathFromIDList(idl, save_path.GetBuffer(MAX_PATH));
+	save_path.ReleaseBuffer();
+	if (save_path.IsEmpty())
 		return NULL;
-	if (strDirectoryPath.Right(1) != "\\")
-		strDirectoryPath += "\\";
-
-	return strDirectoryPath;
+	if (save_path.Right(1) != "\\")
+		save_path += "\\";
+	return save_path;
 }
 
 void Ctld_trackDlg::OnBnClickedAddlabel()
 {
 	// TODO: 在此添加控件通知处理程序代码
+
 }
 
 
@@ -714,3 +791,62 @@ void Ctld_trackDlg::OnBnClickedMovelabel()
 {
 	// TODO: 在此添加控件通知处理程序代码
 }
+
+
+void Ctld_trackDlg::OnBnClickedAbort()
+{
+	// TODO: 在此添加控件通知处理程序代码
+	EnableMemLeakCheck();
+	// 	_CrtSetBreakAlloc(68);
+	
+	for (int i = 0; i<MAX_OBJ_TRACKING; i++)
+	{
+		pRectList->mRectArrayList[i].iIsActive = -1;
+		pRectList->mRectArrayList[i].iIsNew = -1;
+		pRectList->mRectArrayList[i].iObjID = -1;
+	}
+	pRectList->iTotal = -1;
+	pRectList->iNewRectGenerated = -1;
+
+	LineTypeList.iThickness[0] = 2;
+	LineTypeList.LineColor[0] = cvScalar(255, 0, 0);
+
+	LineTypeList.iThickness[1] = 3;
+	LineTypeList.LineColor[1] = cvScalar(0, 255, 0);
+
+	LineTypeList.iThickness[2] = 4;
+	LineTypeList.LineColor[2] = cvScalar(0, 0, 255);
+
+	//static int count = 0;  //用来保存按钮状态，用0、1表示
+	//if (count % 2 == 0)
+	//{
+	//	//设置控件名
+	//	SetDlgItemText(dlg,IDC_, "播放");
+	//	count = 1;  //更新按钮状态
+	//	KillTimer(1);  //移除定时器
+	//}
+	//else
+	//{
+	//	SetDlgItemText(,IDC_CloseVideo, "暂停");
+	//	count = 0;  //更新按钮状态
+	//	SetTimer(1, 100, NULL);  //设置定时器
+	//}
+
+	
+
+	
+	run_tld();
+}
+
+
+void Ctld_trackDlg::OnTimer(UINT_PTR nIDEvent)
+{
+	// TODO: 在此添加消息处理程序代码和/或调用默认值
+	if (nIDEvent == 1)
+//	DrawPicToHDC(FrameImg, IDC_PIC_SHOW);
+
+	CDialogEx::OnTimer(nIDEvent);
+}
+
+
+

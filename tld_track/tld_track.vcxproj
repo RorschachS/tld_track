@@ -193,6 +193,7 @@
   <ItemGroup>
     <ClInclude Include="AMT.h" />
     <ClInclude Include="CommonDef.h" />
+    <ClInclude Include="CvvImage.h" />
     <ClInclude Include="DetecterModule.h" />
     <ClInclude Include="ExpertsModule.h" />
     <ClInclude Include="LK.h" />
@@ -200,6 +201,7 @@
     <ClInclude Include="SingleObject.h" />
     <ClInclude Include="stdafx.h" />
     <ClInclude Include="targetver.h" />
+    <ClInclude Include="TextDlg.h" />
     <ClInclude Include="tld_track.h" />
     <ClInclude Include="tld_trackDlg.h" />
     <ClInclude Include="Track.h" />
@@ -218,6 +220,7 @@
       <PreprocessorDefinitions Condition="'$(Configuration)|$(Platform)'=='Debug|x64'">%(PreprocessorDefinitions)</PreprocessorDefinitions>
       <PrecompiledHeaderFile Condition="'$(Configuration)|$(Platform)'=='Debug|x64'">stdafx.h</PrecompiledHeaderFile>
     </ClCompile>
+    <ClCompile Include="CvvImage.cpp" />
     <ClCompile Include="DetecterModule.cpp">
       <PrecompiledHeader Condition="'$(Configuration)|$(Platform)'=='Debug|x64'">
       </PrecompiledHeader>
@@ -248,6 +251,7 @@
       <PrecompiledHeader Condition="'$(Configuration)|$(Platform)'=='Release|Win32'">Create</PrecompiledHeader>
       <PrecompiledHeader Condition="'$(Configuration)|$(Platform)'=='Release|x64'">Create</PrecompiledHeader>
     </ClCompile>
+    <ClCompile Include="TextDlg.cpp" />
     <ClCompile Include="tinyxml2.cpp">
       <PrecompiledHeader Condition="'$(Configuration)|$(Platform)'=='Debug|x64'">
       </PrecompiledHeader>
