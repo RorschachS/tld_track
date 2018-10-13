@@ -77,6 +77,8 @@ CvRect SelectRect;
 
 char file_path[200]="";
 CString save_path;
+bool en_select=false;//不可标注
+bool bPause = false; // 暂停标识 false->播放
 
 inline void EnableMemLeakCheck()
 {
@@ -153,6 +155,7 @@ Ctld_trackDlg::Ctld_trackDlg(CWnd* pParent /*=NULL*/)
 void Ctld_trackDlg::DoDataExchange(CDataExchange* pDX)
 {
 	CDialogEx::DoDataExchange(pDX);
+	DDX_Control(pDX, IDABORT, m_Enble);
 }
 
 BEGIN_MESSAGE_MAP(Ctld_trackDlg, CDialogEx)
@@ -283,8 +286,12 @@ void Ctld_trackDlg::DrawPicToHDC(IplImage * img, UINT ID)
 };
 
 
-void Ctld_trackDlg::run_tld()
+//void Ctld_trackDlg::run_tld()
+
+//void run_tld()
+DWORD _stdcall run_tld(LPVOID lpParameter)
 {
+	Ctld_trackDlg * pDlg = (Ctld_trackDlg*)lpParameter;
 	//cvNamedWindow("avi");
 	char* filename = file_path;
 	//char* filename = "D:\\yolo\\videos\\test_video1.avi";
@@ -298,7 +305,7 @@ void Ctld_trackDlg::run_tld()
 	if (!pCapture)
 	{
 		fprintf(stderr, "pCapture is Null!\n");
-		return;
+		return 0;
 	}
 	int iScale = 1.0;
 	double BeginFrameIdx = 3;
@@ -317,7 +324,7 @@ void Ctld_trackDlg::run_tld()
 	if (!(CapImg = cvQueryFrame(pCapture)))
 	{
 		fprintf(stderr, "pFrame is Null!\n");
-		return;
+		return 0;
 	}
 
 	if (FrameImg == NULL)
@@ -332,8 +339,11 @@ void Ctld_trackDlg::run_tld()
 	CvFont font = cvFont(1, 1);   // init font
 								  //char text[256];
 	//cvNamedWindow(window_name, 1);
+
 	cvSetMouseCallback(window_name, On_Mouse);
-	bool bPause = false; // 暂停标识
+	//en_select = false;
+
+
 	int iPauseKey = 1;
 	double dProcTime = 0, dTime;
 	int iProcCount = 0;
@@ -342,364 +352,385 @@ void Ctld_trackDlg::run_tld()
 #if 0
 		cvWaitKey(100); //将视频变慢
 #endif
-		if (frameNum == 1)
+
+
+			if (frameNum == 1)
 		{
-			cvWaitKey(0);
+			cvWaitKey(10);
 		}
-		if (!(CapImg = cvQueryFrame(pCapture)))
-		{
-			fprintf(stderr, "pFrame is Null!\n");
-			break;
-		}
-		cvResize(CapImg, FrameImg);
-
-		//cvFlip(FrameImg);
-
-		cvCvtColor(FrameImg, FrameGray, CV_RGB2GRAY);
-
-		iKey = cvWaitKey(10);  // "ESC"
-		if (iKey == 27)
-		{
-			break;
-		}
-
-		frameNum++;
-
-		if (pRectList->iNewRectGenerated == 1) // if there is new rectangle generated 
-		{
-			for (int i = 0; i < MAX_OBJ_TRACKING; i++)
-			{
-				if ((pRectList->mRectArrayList[i].iIsNew == 1) && (pRectList->mRectArrayList[i].iIsActive == 1))
-				{
-					TimeStamp = clock();
-					pRectList->mRectArrayList[i].iObjID = iID;  //将ID 付给这个框   ID是连接跟踪目标和框的唯一标识
-
-					AmtCreateObject(&Amt, pRectList->mRectArrayList[i].RectElement, iID++, (long long)TimeStamp);
-					pRectList->mRectArrayList[i].iIsNew = -1;
-				}
-			}
-			object_num++;
-			pRectList->iNewRectGenerated = -1;
-		}
-
-		dTime = GetTickCount();
-		// ======================  TLD处理每一帧  ================================
-		AmtExecute(&Amt, FrameGray, (long long)time(NULL) * 1000, AMT_ALL_AROUND);//此处如何给定初始位置
-		dTime = GetTickCount() - dTime;
-		dProcTime += dTime;
-		iProcCount++;
-
-		fprintf(stdout, "帧数: %d, time = %g ms\r", frameNum, dTime);
-
-		int boundLineY = 2;
-		int boundLineX = 2;
-		// 销毁过线目标
-		for (int i = 0; i < MAX_OBJECT_NUM; i++)
-		{
-			if (Amt.m_ObjStatus[i].mStatus) //如果目标处于激活状态
-			{
-				int iObjID = Amt.m_ObjStatus[i].mID;
-				int iCountMiss = Amt.m_ObjStatus[i].mCountMiss;
-				int iUnStableN = Amt.m_ObjStatus[i].mUnstableNum;
-				CvPoint &mPos = Amt.m_ObjStatus[i].mPos;
-				if (iCountMiss > 2 || iUnStableN > 4 || mPos.y < boundLineY || mPos.x < boundLineX || mPos.x > FrameImg->width - boundLineX)
-				{
-					int iRectIndex = -1;
-					for (int j = 0; j < MAX_OBJ_TRACKING; j++)
-					{
-						if (pRectList->mRectArrayList[j].iObjID == iObjID)
+						if (!(CapImg = cvQueryFrame(pCapture)))
 						{
-							iRectIndex = j;
+							fprintf(stderr, "pFrame is Null!\n");
 							break;
 						}
-					}
-					if (iRectIndex > 0)
-					{
-						pRectList->mRectArrayList[iRectIndex].iIsActive = -1;
-						pRectList->mRectArrayList[iRectIndex].iIsNew = -1;
-						pRectList->mRectArrayList[iRectIndex].iObjID = -1;
-						pRectList->mRectArrayList[iRectIndex].RectElement.x = -1;
-						pRectList->mRectArrayList[iRectIndex].RectElement.y = -1;
-						pRectList->mRectArrayList[iRectIndex].RectElement.width = -1;
-						pRectList->mRectArrayList[iRectIndex].RectElement.height = -1;
-					}
+						cvResize(CapImg, FrameImg);
 
-					AmtCleanObject(&Amt, iObjID);
+						//cvFlip(FrameImg);
+
+						cvCvtColor(FrameImg, FrameGray, CV_RGB2GRAY);
+
+						//iKey = cvWaitKey(10);  // "ESC"
+						//if (iKey == 27)
+						//{
+						//	break;
+						//}
+
+							frameNum++;
+						
+
+						if (pRectList->iNewRectGenerated == 1) // if there is new rectangle generated 
+						{
+							for (int i = 0; i < MAX_OBJ_TRACKING; i++)
+							{
+								if ((pRectList->mRectArrayList[i].iIsNew == 1) && (pRectList->mRectArrayList[i].iIsActive == 1))
+								{
+									TimeStamp = clock();
+									pRectList->mRectArrayList[i].iObjID = iID;  //将ID 付给这个框   ID是连接跟踪目标和框的唯一标识
+
+									AmtCreateObject(&Amt, pRectList->mRectArrayList[i].RectElement, iID++, (long long)TimeStamp);
+									pRectList->mRectArrayList[i].iIsNew = -1;
+								}
+							}
+							object_num++;
+							pRectList->iNewRectGenerated = -1;
+						}
+
+						dTime = GetTickCount();
+						// ======================  TLD处理每一帧  ================================
+						AmtExecute(&Amt, FrameGray, (long long)time(NULL) * 1000, AMT_ALL_AROUND);//此处如何给定初始位置
+						dTime = GetTickCount() - dTime;
+						dProcTime += dTime;
+						iProcCount++;
+
+						fprintf(stdout, "帧数: %d, time = %g ms\r", frameNum, dTime);
+						int boundLineY = 2;
+						int boundLineX = 2;
+
+						// 销毁过线目标
+						for (int i = 0; i < MAX_OBJECT_NUM; i++)
+						{
+							if (Amt.m_ObjStatus[i].mStatus) //如果目标处于激活状态
+							{
+								int iObjID = Amt.m_ObjStatus[i].mID;
+								int iCountMiss = Amt.m_ObjStatus[i].mCountMiss;
+								int iUnStableN = Amt.m_ObjStatus[i].mUnstableNum;
+								CvPoint &mPos = Amt.m_ObjStatus[i].mPos;
+								if (iCountMiss > 2 || iUnStableN > 4 || mPos.y < boundLineY || mPos.x < boundLineX || mPos.x > FrameImg->width - boundLineX)
+								{
+									int iRectIndex = -1;
+									for (int j = 0; j < MAX_OBJ_TRACKING; j++)
+									{
+										if (pRectList->mRectArrayList[j].iObjID == iObjID)
+										{
+											iRectIndex = j;
+											break;
+										}
+									}
+									if (iRectIndex > 0)
+									{
+										pRectList->mRectArrayList[iRectIndex].iIsActive = -1;
+										pRectList->mRectArrayList[iRectIndex].iIsNew = -1;
+										pRectList->mRectArrayList[iRectIndex].iObjID = -1;
+										pRectList->mRectArrayList[iRectIndex].RectElement.x = -1;
+										pRectList->mRectArrayList[iRectIndex].RectElement.y = -1;
+										pRectList->mRectArrayList[iRectIndex].RectElement.width = -1;
+										pRectList->mRectArrayList[iRectIndex].RectElement.height = -1;
+									}
+
+									AmtCleanObject(&Amt, iObjID);
 
 
 
 
-					continue;
-				}
+									continue;
+								}
 
-				//绘制目标轨迹
-				AmtGetObjTrajectory(&Amt, iObjID, &pPoints, &iPointNum);
+								//绘制目标轨迹
+								AmtGetObjTrajectory(&Amt, iObjID, &pPoints, &iPointNum);
 
-				for (int k = 0; k < iPointNum - 1; ++k)
-				{
-					cvLine(FrameImg, cvPoint(pPoints[k].x, pPoints[k].y), cvPoint(pPoints[k + 1].x, pPoints[k + 1].y), LineTypeList.LineColor[iObjID % 3], LineTypeList.iThickness[iObjID % 3]);
-				}
-				CvRect* pEndRect = &(Amt.m_ObjStatus[i].mBbox);
-				cvRectangle(FrameImg, cvPoint(pEndRect->x, pEndRect->y), cvPoint(pEndRect->x + pEndRect->width, pEndRect->y + pEndRect->height), cvScalar(0, 255, 0), 1);
-				pRectList->mRectArrayList[i].pos[0] = pEndRect->x;
-				pRectList->mRectArrayList[i].pos[1] = pEndRect->y;
-				pRectList->mRectArrayList[i].pos[2] = pEndRect->x + pEndRect->width;
-				pRectList->mRectArrayList[i].pos[3] = pEndRect->y + pEndRect->height;
+								for (int k = 0; k < iPointNum - 1; ++k)
+								{
+									cvLine(FrameImg, cvPoint(pPoints[k].x, pPoints[k].y), cvPoint(pPoints[k + 1].x, pPoints[k + 1].y), LineTypeList.LineColor[iObjID % 3], LineTypeList.iThickness[iObjID % 3]);
+								}
+								CvRect* pEndRect = &(Amt.m_ObjStatus[i].mBbox);
+								cvRectangle(FrameImg, cvPoint(pEndRect->x, pEndRect->y), cvPoint(pEndRect->x + pEndRect->width, pEndRect->y + pEndRect->height), cvScalar(0, 255, 0), 1);
+								pRectList->mRectArrayList[i].pos[0] = pEndRect->x;
+								pRectList->mRectArrayList[i].pos[1] = pEndRect->y;
+								pRectList->mRectArrayList[i].pos[2] = pEndRect->x + pEndRect->width;
+								pRectList->mRectArrayList[i].pos[3] = pEndRect->y + pEndRect->height;
 
-				//				cvPolyLine(FrameImg, &pPoints, &iPointNum, 1, 0, CV_RGB(0,255,0), 1);
-			}
-		}
-		cvLine(FrameImg, cvPoint(boundLineX, 0), cvPoint(boundLineX, FrameImg->height - 1), cvScalar(255), 2, 8, 0);
-		cvLine(FrameImg, cvPoint(FrameImg->width - boundLineX, 0), cvPoint(FrameImg->width - boundLineX, FrameImg->height - 1), cvScalar(255), 2, 8, 0);
-		cvLine(FrameImg, cvPoint(0, boundLineY), cvPoint(FrameImg->width - 1, boundLineY), cvScalar(255), 2, 8, 0);
-		//cvShowImage(window_name, FrameImg);
-		cvShowImage(window_name, FrameImg);
-		//SetTimer(1, 1, NULL);
-		//DrawPicToHDC(FrameImg, IDC_PIC_SHOW);
-
-		if (bPause == false)
-			iPauseKey = cvWaitKey(10);     //播放
-		else
-			iPauseKey = cvWaitKey(0);      //暂停  
-
-		// 触发暂停  P或F1
-		if (80 == iPauseKey || 112 == iPauseKey)
-			bPause = true;
-		else
-			bPause = false;
+								//				cvPolyLine(FrameImg, &pPoints, &iPointNum, 1, 0, CV_RGB(0,255,0), 1);
+							}
+						}
+						cvLine(FrameImg, cvPoint(boundLineX, 0), cvPoint(boundLineX, FrameImg->height - 1), cvScalar(255), 2, 8, 0);
+						cvLine(FrameImg, cvPoint(FrameImg->width - boundLineX, 0), cvPoint(FrameImg->width - boundLineX, FrameImg->height - 1), cvScalar(255), 2, 8, 0);
+						cvLine(FrameImg, cvPoint(0, boundLineY), cvPoint(FrameImg->width - 1, boundLineY), cvScalar(255), 2, 8, 0);
+						//cvShowImage(window_name, FrameImg);
+						cvShowImage(window_name, FrameImg);
 
 
-		tinyxml2::XMLDocument xmlDoc;
-		//size_t cnt = 0;
-		//for (int j = 0; j < MAX_OBJ_TRACKING; ++j)
+
+			//SetTimer(1, 1, NULL);
+			//DrawPicToHDC(FrameImg, IDC_PIC_SHOW);
+		//}
+		//else
 		//{
-		//	if (pRectList->mRectArrayList[j].isAnnotated)
-		//	{
-		//		cnt++;
-		//pRectList->mRectArrayList[frameNum].name = to_string(frameNum);
-		char name[6];
-		sprintf(name, "%06d", frameNum);
 
-		XMLNode * annotation = xmlDoc.NewElement("annotation");
-		xmlDoc.InsertFirstChild(annotation);
+		//}
 
-		XMLElement * pElement = xmlDoc.NewElement("folder");
-		pElement->SetText("VOCType");
-		annotation->InsertFirstChild(pElement);
 
-		pElement = xmlDoc.NewElement("filename");
-		pElement->SetText(name); //pRectList->mRectArrayList[frameNum].name.c_str());
-		annotation->InsertEndChild(pElement);
+	// 触发暂停  P或F1
+	//if (80 == iPauseKey || 112 == iPauseKey)
+	//	bPause = true;
+	//else
+	//	bPause = false;
 
-		pElement = xmlDoc.NewElement("source");
-		XMLElement * pElement_sub = xmlDoc.NewElement("database");
-		pElement_sub->SetText("VOC");
-		pElement->InsertFirstChild(pElement_sub);
-		annotation->InsertEndChild(pElement);
 
-		pElement = xmlDoc.NewElement("size");
-		pElement_sub = xmlDoc.NewElement("width");
-		pElement_sub->SetText(FrameImg->width);//pRectList->mRectArrayList[frameNum].RectElement.width);
-		pElement->InsertFirstChild(pElement_sub);
-		pElement_sub = xmlDoc.NewElement("height");
-		pElement_sub->SetText(FrameImg->height);//pRectList->mRectArrayList[frameNum].RectElement.height);
-		pElement->InsertEndChild(pElement_sub);
-		pElement_sub = xmlDoc.NewElement("depth");
-		pElement_sub->SetText(3);
-		pElement->InsertEndChild(pElement_sub);
-		annotation->InsertEndChild(pElement);
+			tinyxml2::XMLDocument xmlDoc;
+			//size_t cnt = 0;
+			//for (int j = 0; j < MAX_OBJ_TRACKING; ++j)
+			//{
+			//	if (pRectList->mRectArrayList[j].isAnnotated)
+			//	{
+			//		cnt++;
+			//pRectList->mRectArrayList[frameNum].name = to_string(frameNum);
+			char name[6];
+			sprintf(name, "%06d", frameNum);
 
-		pElement = xmlDoc.NewElement("segmented"); // 是否分割
-		pElement->SetText(0);
-		annotation->InsertEndChild(pElement);
 
-		for (int k = 0; k < object_num; ++k)
-		{
-			pElement = xmlDoc.NewElement("object");
-			pElement_sub = xmlDoc.NewElement("name"); // 类别
-			pElement_sub->SetText(pRectList->mRectArrayList[k].label.c_str());
-			pElement->InsertFirstChild(pElement_sub);
+			XMLNode * annotation = xmlDoc.NewElement("annotation");
+			xmlDoc.InsertFirstChild(annotation);
 
-			pElement_sub = xmlDoc.NewElement("pose"); // 姿态
-			pElement_sub->SetText("Unspecified");
-			pElement->InsertEndChild(pElement_sub);
+			XMLElement * pElement = xmlDoc.NewElement("folder");
+			pElement->SetText("VOCType");
+			annotation->InsertFirstChild(pElement);
 
-			pElement_sub = xmlDoc.NewElement("truncated");
-			pElement_sub->SetText(0);
-			pElement->InsertEndChild(pElement_sub);
-
-			pElement_sub = xmlDoc.NewElement("difficult");
-			pElement_sub->SetText(0);
-			pElement->InsertEndChild(pElement_sub);
-
-			pElement_sub = xmlDoc.NewElement("bndbox");
-			XMLElement* pElement_sub_sub = xmlDoc.NewElement("xmin");
-			pElement_sub_sub->SetText(pRectList->mRectArrayList[k].pos[0]);
-			pElement_sub->InsertFirstChild(pElement_sub_sub);
-			pElement_sub_sub = xmlDoc.NewElement("ymin");
-			pElement_sub_sub->SetText(pRectList->mRectArrayList[k].pos[1]);
-			pElement_sub->InsertEndChild(pElement_sub_sub);
-			pElement_sub_sub = xmlDoc.NewElement("xmax");
-			pElement_sub_sub->SetText(pRectList->mRectArrayList[k].pos[2]);
-			pElement_sub->InsertEndChild(pElement_sub_sub);
-			pElement_sub_sub = xmlDoc.NewElement("ymax");
-			pElement_sub_sub->SetText(pRectList->mRectArrayList[k].pos[3]);
-			pElement_sub->InsertEndChild(pElement_sub_sub);
-			pElement->InsertEndChild(pElement_sub);
-
+			pElement = xmlDoc.NewElement("filename");
+			pElement->SetText(name); //pRectList->mRectArrayList[frameNum].name.c_str());
 			annotation->InsertEndChild(pElement);
 
-		}
+			pElement = xmlDoc.NewElement("source");
+			XMLElement * pElement_sub = xmlDoc.NewElement("database");
+			pElement_sub->SetText("VOC");
+			pElement->InsertFirstChild(pElement_sub);
+			annotation->InsertEndChild(pElement);
 
-		//string savefile = save_path.GetBuffer;// = (LPCTSTR)save_path;
-		string savefile = CT2A(save_path);
-		
-		//for (int x = 0; x < pRectList->mRectArrayList[j].name.length() - 4; ++x)
-		//{
-		//	filename += pRectList->mRectArrayList[j].name[x];
+			pElement = xmlDoc.NewElement("size");
+			pElement_sub = xmlDoc.NewElement("width");
+			pElement_sub->SetText(FrameImg->width);//pRectList->mRectArrayList[frameNum].RectElement.width);
+			pElement->InsertFirstChild(pElement_sub);
+			pElement_sub = xmlDoc.NewElement("height");
+			pElement_sub->SetText(FrameImg->height);//pRectList->mRectArrayList[frameNum].RectElement.height);
+			pElement->InsertEndChild(pElement_sub);
+			pElement_sub = xmlDoc.NewElement("depth");
+			pElement_sub->SetText(3);
+			pElement->InsertEndChild(pElement_sub);
+			annotation->InsertEndChild(pElement);
 
-		savefile += name;
-		//}
-		savefile += ".xml";
-		xmlDoc.SaveFile(savefile.c_str());
-		
-		
+			pElement = xmlDoc.NewElement("segmented"); // 是否分割
+			pElement->SetText(0);
+			annotation->InsertEndChild(pElement);
+
+			for (int k = 0; k < object_num; ++k)
+			{
+				pElement = xmlDoc.NewElement("object");
+				pElement_sub = xmlDoc.NewElement("name"); // 类别
+				pElement_sub->SetText(pRectList->mRectArrayList[k].label.c_str());
+				pElement->InsertFirstChild(pElement_sub);
+
+				pElement_sub = xmlDoc.NewElement("pose"); // 姿态
+				pElement_sub->SetText("Unspecified");
+				pElement->InsertEndChild(pElement_sub);
+
+				pElement_sub = xmlDoc.NewElement("truncated");
+				pElement_sub->SetText(0);
+				pElement->InsertEndChild(pElement_sub);
+
+				pElement_sub = xmlDoc.NewElement("difficult");
+				pElement_sub->SetText(0);
+				pElement->InsertEndChild(pElement_sub);
+
+				pElement_sub = xmlDoc.NewElement("bndbox");
+				XMLElement* pElement_sub_sub = xmlDoc.NewElement("xmin");
+				pElement_sub_sub->SetText(pRectList->mRectArrayList[k].pos[0]);
+				pElement_sub->InsertFirstChild(pElement_sub_sub);
+				pElement_sub_sub = xmlDoc.NewElement("ymin");
+				pElement_sub_sub->SetText(pRectList->mRectArrayList[k].pos[1]);
+				pElement_sub->InsertEndChild(pElement_sub_sub);
+				pElement_sub_sub = xmlDoc.NewElement("xmax");
+				pElement_sub_sub->SetText(pRectList->mRectArrayList[k].pos[2]);
+				pElement_sub->InsertEndChild(pElement_sub_sub);
+				pElement_sub_sub = xmlDoc.NewElement("ymax");
+				pElement_sub_sub->SetText(pRectList->mRectArrayList[k].pos[3]);
+				pElement_sub->InsertEndChild(pElement_sub_sub);
+				pElement->InsertEndChild(pElement_sub);
+
+				annotation->InsertEndChild(pElement);
+
 			}
 
+			//string savefile = save_path.GetBuffer;// = (LPCTSTR)save_path;
+			string savefile = CT2A(save_path);
 
+			//for (int x = 0; x < pRectList->mRectArrayList[j].name.length() - 4; ++x)
+			//{
+			//	filename += pRectList->mRectArrayList[j].name[x];
 
+			savefile += name;
+			//}
+			savefile += ".xml";
+			xmlDoc.SaveFile(savefile.c_str());
 
+		//}//if（bPause）结束
+		//else
+		//{
+		//	;
+		//}
+			
+		}//for循环结束
+	
+		// #ifdef  EV_JPEG
+		// 	evReleaseCapture(&pCapture); 
+		// #else
+		cvReleaseCapture(&pCapture);
+		// #endif
+		cvReleaseImage(&FrameImg);
+		cvReleaseImage(&FrameGray);
+		cvReleaseImage(&TempImg);
+		cvDestroyAllWindows();
+		AmtStructUnInit(&Amt);
+		
 
-
-
-	// #ifdef  EV_JPEG
-	// 	evReleaseCapture(&pCapture); 
-	// #else
-	cvReleaseCapture(&pCapture);
-	// #endif
-	cvReleaseImage(&FrameImg);
-	cvReleaseImage(&FrameGray);
-	cvReleaseImage(&TempImg);
-	cvDestroyAllWindows();
-	AmtStructUnInit(&Amt);
+	
+		return 0;
 }
 
 
 void On_Mouse(int event, int x, int y, int flags, void* param)
 {
-	//Ctld_trackDlg *pDlg = (Ctld_trackDlg*)p_Dlg;
-	if (event == CV_EVENT_LBUTTONDOWN)
-	{
-		pre_pt = cvPoint(x, y);
-		printf("*************************Left Button Down, point is (%d %d)\n\n", pre_pt.x, pre_pt.y);
-	}
-	if (event == CV_EVENT_MOUSEMOVE && (flags && CV_EVENT_FLAG_LBUTTON))
-	{
-		end_pt = cvPoint(x, y);
-		printf("*************************Mouse Move, point is (%d %d)\r\r", end_pt.x, end_pt.y);
+	//if (en_select == false)
+	//{
+	//	;
+	//}
+	//else
 
-		SelectRect.x = MIN(pre_pt.x, end_pt.x);
-		SelectRect.y = MIN(pre_pt.y, end_pt.y);
-		SelectRect.width = abs(pre_pt.x - end_pt.x);
-		SelectRect.height = abs(pre_pt.y - end_pt.y);
-		cvCopy(FrameImg, TempImg);
-		//		cvLine(temp, pre_pt, end_pt, CV_RGB(255, 0, 0), 2, 8, 0);
-		cvRectangle(TempImg, pre_pt, end_pt, CV_RGB(255, 0, 0), 2, 8, 0);
-		cvShowImage(window_name, TempImg);
-	}
-	if (event == CV_EVENT_LBUTTONUP)
-	{
-		end_pt = cvPoint(x, y);
-		printf("*************************Left Mouse Up, point is (%d %d)\n\n", end_pt.x, end_pt.y);
-
-		SelectRect.x = MIN(pre_pt.x, end_pt.x);
-		SelectRect.y = MIN(pre_pt.y, end_pt.y);
-		SelectRect.width = abs(pre_pt.x - end_pt.x);
-		SelectRect.height = abs(pre_pt.y - end_pt.y);
-
-
-
-		int isfound = -1;
-
-		if ((SelectRect.x >= 0) && (SelectRect.x<FrameImg->width) && (SelectRect.y >= 0) && (SelectRect.y<FrameImg->height) && (SelectRect.width >= MIN_RECT_WIDTH) && (SelectRect.height >= MIN_RECT_HEIGHT))
+	//{
+		//Ctld_trackDlg *pDlg = (Ctld_trackDlg*)p_Dlg;
+		if (event == CV_EVENT_LBUTTONDOWN)
 		{
-			for (int i = 0; i<MAX_OBJ_TRACKING; i++)
+			if (en_select == true)
+			pre_pt = cvPoint(x, y);
+			else
 			{
-				if (pRectList->mRectArrayList[i].iIsActive == -1)
-				{
-					pRectList->mRectArrayList[i].RectElement.x = SelectRect.x;
-					pRectList->mRectArrayList[i].RectElement.y = SelectRect.y;
-					pRectList->mRectArrayList[i].RectElement.width = SelectRect.width;
-					pRectList->mRectArrayList[i].RectElement.height = SelectRect.height;
-					pRectList->mRectArrayList[i].iIsActive = 1;
-					pRectList->mRectArrayList[i].iIsNew = 1;
-					isfound = i;
-					pRectList->iNewRectGenerated = 1;//indicating there is new Rect generated from windows input
-					pRectList->mRectArrayList[i].isAnnotated = 1;
-
-
-
-					// TODO: Add your control notification handler code here
-					//DlgB dlgB;    // 新建B对话框的对象
-					//if (IDOK == dlgB.DoModal())
-					//{
-					//	m_strA = dlgB.m_strB;   // m_strA是a编辑框关联的变量，m_strB是b对话框关联的变量
-					//}
-					//UpdateData(FALSE);
-
-
-
-
-
-
-					CString temp_label = NULL;
-					TextDlg text_dlg;
-					if (text_dlg.DoModal() == IDOK)
-					{
-
-					//	CEdit* my_dlg = (CEdit*)GetDlgItem(text_dlg, IDC_EDIT1);
-					//	my_dlg->GetWindowText(temp_label);//->GetWindowText(label);
-						temp_label = text_dlg.get_text;
-					}
-					string label = CT2A(temp_label);
-					pRectList->mRectArrayList[i].label.assign(label, 0, sizeof(label));
-					
-					
-					//}
-
-					//pRectList->mRectArrayList[i].pos[0] = SelectRect.x + 0.5*SelectRect.width;
-					//pRectList->mRectArrayList[i].pos[1] = SelectRect.y + 0.5*SelectRect.height;
-					//pRectList->mRectArrayList[i].pos[2] = SelectRect.x + 0.5*SelectRect.width;
-					//pRectList->mRectArrayList[i].pos[3] = SelectRect.x + 0.5*SelectRect.height;
-
-					break;
-				}
+				;
 			}
-			if (isfound < 0)
+			//printf("*************************Left Button Down, point is (%d %d)\n\n", pre_pt.x, pre_pt.y);
+		}
+		if (event == CV_EVENT_MOUSEMOVE && (flags && CV_EVENT_FLAG_LBUTTON))
+		{
+			if (en_select == true) {
+				end_pt = cvPoint(x, y);
+				//printf("*************************Mouse Move, point is (%d %d)\r\r", end_pt.x, end_pt.y);
+
+				SelectRect.x = MIN(pre_pt.x, end_pt.x);
+				SelectRect.y = MIN(pre_pt.y, end_pt.y);
+				SelectRect.width = abs(pre_pt.x - end_pt.x);
+				SelectRect.height = abs(pre_pt.y - end_pt.y);
+				cvCopy(FrameImg, TempImg);
+				//		cvLine(temp, pre_pt, end_pt, CV_RGB(255, 0, 0), 2, 8, 0);
+				cvRectangle(TempImg, pre_pt, end_pt, CV_RGB(255, 0, 0), 2, 8, 0);
+				cvShowImage(window_name, TempImg);
+			}
+			else
 			{
-				printf("There are too many boxes in executing!\n");
+				;
 			}
 		}
+		if (event == CV_EVENT_LBUTTONUP)
+		{
+			if (en_select == true)
+			{
+			end_pt = cvPoint(x, y);
+			printf("*************************Left Mouse Up, point is (%d %d)\n\n", end_pt.x, end_pt.y);
 
-		cvCopy(FrameImg, TempImg); //将FrameImg中图像内容拷贝到TempImg中去
-		cvRectangle(TempImg, pre_pt, end_pt, CV_RGB(0, 255, 0), 2, 8, 0);
-		cvShowImage(window_name, TempImg);
-		cvWaitKey(1);
-		track_object = -1;
+			SelectRect.x = MIN(pre_pt.x, end_pt.x);
+			SelectRect.y = MIN(pre_pt.y, end_pt.y);
+			SelectRect.width = abs(pre_pt.x - end_pt.x);
+			SelectRect.height = abs(pre_pt.y - end_pt.y);
 
+
+
+			int isfound = -1;
+
+			if ((SelectRect.x >= 0) && (SelectRect.x < FrameImg->width) && (SelectRect.y >= 0) && (SelectRect.y < FrameImg->height) && (SelectRect.width >= MIN_RECT_WIDTH) && (SelectRect.height >= MIN_RECT_HEIGHT))
+			{
+				for (int i = 0; i < MAX_OBJ_TRACKING; i++)
+				{
+					if (pRectList->mRectArrayList[i].iIsActive == -1)
+					{
+						pRectList->mRectArrayList[i].RectElement.x = SelectRect.x;
+						pRectList->mRectArrayList[i].RectElement.y = SelectRect.y;
+						pRectList->mRectArrayList[i].RectElement.width = SelectRect.width;
+						pRectList->mRectArrayList[i].RectElement.height = SelectRect.height;
+						pRectList->mRectArrayList[i].iIsActive = 1;
+						pRectList->mRectArrayList[i].iIsNew = 1;
+						isfound = i;
+						pRectList->iNewRectGenerated = 1;//indicating there is new Rect generated from windows input
+						pRectList->mRectArrayList[i].isAnnotated = 1;
+
+
+						CString temp_label = NULL;
+						TextDlg text_dlg;
+						if (text_dlg.DoModal() == IDOK)
+						{
+
+							//	CEdit* my_dlg = (CEdit*)GetDlgItem(text_dlg, IDC_EDIT1);
+							//	my_dlg->GetWindowText(temp_label);//->GetWindowText(label);
+							temp_label = text_dlg.get_text;
+						}
+						string label = CT2A(temp_label);
+						pRectList->mRectArrayList[i].label.assign(label, 0, sizeof(label));
+
+
+						//}
+
+
+						break;
+					}
+				}
+				if (isfound < 0)
+				{
+					printf("There are too many boxes in executing!\n");
+				}
+			}
+
+			cvCopy(FrameImg, TempImg); //将FrameImg中图像内容拷贝到TempImg中去
+			cvRectangle(TempImg, pre_pt, end_pt, CV_RGB(0, 255, 0), 2, 8, 0);
+			
+			
+
+			cvShowImage(window_name, TempImg);
+			cvWaitKey(1);
+			track_object = -1;
+			en_select = false;
+
+		}
+		
+	}
+		else
+		{
+			;
+		}
+		
 
 	}
-
-
-}
 
 void Ctld_trackDlg::OnBnClickedOpen()
 {
 	// TODO: 在此添加控件通知处理程序代码
 
 	
-	// 存储最终文件路径
-	//char fName[1024];
+	// 获取存储文件路径并赋值给file_path变量
 	CString myPathName = NULL;
 	CFileDialog select_dlg(TRUE, NULL, NULL, OFN_HIDEREADONLY | OFN_OVERWRITEPROMPT, _T("All Files(*.avi)|*.avi|所有文件(*.*)|*.*|"), NULL);
 	if (select_dlg.DoModal())
@@ -713,32 +744,35 @@ void Ctld_trackDlg::OnBnClickedOpen()
 //	file_path = fName;
 //	printf("fName = %s\n", fName);
 
-	cvWaitKey(100);
-	//EnableMemLeakCheck();
-	//// 	_CrtSetBreakAlloc(68);
+// TODO: 在此添加控件通知处理程序代码
+	EnableMemLeakCheck();
+	// 	_CrtSetBreakAlloc(68);
 
-	//for (int i = 0; i<MAX_OBJ_TRACKING; i++)
-	//{
-	//	pRectList->mRectArrayList[i].iIsActive = -1;
-	//	pRectList->mRectArrayList[i].iIsNew = -1;
-	//	pRectList->mRectArrayList[i].iObjID = -1;
-	//}
-	//pRectList->iTotal = -1;
-	//pRectList->iNewRectGenerated = -1;
+	for (int i = 0; i<MAX_OBJ_TRACKING; i++)
+	{
+		pRectList->mRectArrayList[i].iIsActive = -1;
+		pRectList->mRectArrayList[i].iIsNew = -1;
+		pRectList->mRectArrayList[i].iObjID = -1;
+	}
+	pRectList->iTotal = -1;
+	pRectList->iNewRectGenerated = -1;
 
-	//LineTypeList.iThickness[0] = 2;
-	//LineTypeList.LineColor[0] = cvScalar(255, 0, 0);
+	LineTypeList.iThickness[0] = 2;
+	LineTypeList.LineColor[0] = cvScalar(255, 0, 0);
 
-	//LineTypeList.iThickness[1] = 3;
-	//LineTypeList.LineColor[1] = cvScalar(0, 255, 0);
+	LineTypeList.iThickness[1] = 3;
+	LineTypeList.LineColor[1] = cvScalar(0, 255, 0);
 
-	//LineTypeList.iThickness[2] = 4;
-	//LineTypeList.LineColor[2] = cvScalar(0, 0, 255);
+	LineTypeList.iThickness[2] = 4;
+	LineTypeList.LineColor[2] = cvScalar(0, 0, 255);
 
+
+	m_hThread = CreateThread(NULL, 0, run_tld, this, 0, NULL);
+	
 
 	//run_tld();
 
-	////	TestMeanShiftTrack();
+	//	TestMeanShiftTrack();
 
 	//_CrtDumpMemoryLeaks();
 }
@@ -777,6 +811,10 @@ CString Ctld_trackDlg::FicowGetDirectory()
 void Ctld_trackDlg::OnBnClickedAddlabel()
 {
 	// TODO: 在此添加控件通知处理程序代码
+	en_select = true;
+	//cvWaitKey(100);
+	
+	//cvSetMouseCallback(window_name, On_Mouse);
 
 }
 
@@ -796,46 +834,34 @@ void Ctld_trackDlg::OnBnClickedMovelabel()
 void Ctld_trackDlg::OnBnClickedAbort()
 {
 	// TODO: 在此添加控件通知处理程序代码
-	EnableMemLeakCheck();
-	// 	_CrtSetBreakAlloc(68);
-	
-	for (int i = 0; i<MAX_OBJ_TRACKING; i++)
+
+
+	static int count = 0;  //用来保存按钮状态，用0、1表示
+	if (count % 2 == 0)
 	{
-		pRectList->mRectArrayList[i].iIsActive = -1;
-		pRectList->mRectArrayList[i].iIsNew = -1;
-		pRectList->mRectArrayList[i].iObjID = -1;
-	}
-	pRectList->iTotal = -1;
-	pRectList->iNewRectGenerated = -1;
-
-	LineTypeList.iThickness[0] = 2;
-	LineTypeList.LineColor[0] = cvScalar(255, 0, 0);
-
-	LineTypeList.iThickness[1] = 3;
-	LineTypeList.LineColor[1] = cvScalar(0, 255, 0);
-
-	LineTypeList.iThickness[2] = 4;
-	LineTypeList.LineColor[2] = cvScalar(0, 0, 255);
-
-	//static int count = 0;  //用来保存按钮状态，用0、1表示
-	//if (count % 2 == 0)
-	//{
 	//	//设置控件名
-	//	SetDlgItemText(dlg,IDC_, "播放");
-	//	count = 1;  //更新按钮状态
-	//	KillTimer(1);  //移除定时器
-	//}
-	//else
-	//{
-	//	SetDlgItemText(,IDC_CloseVideo, "暂停");
-	//	count = 0;  //更新按钮状态
-	//	SetTimer(1, 100, NULL);  //设置定时器
-	//}
+		m_Enble.SetWindowTextW(_T("暂停"));
+	//	GetDlgItem(IDABORT)->SetDlgItemTextW(IDABORT, (LPCTSTR)"暂停");
+		count = 1;  //更新按钮状态
+		//KillTimer(1);  //移除定时器
+		//bPause = true; //修改暂停标志位，使播放
+		ResumeThread(m_hThread);
+		
+	}
+	else
+	{
+		m_Enble.SetWindowTextW(_T("播放"));
+		//GetDlgItem(IDABORT)->SetDlgItemTextW(IDABORT, (LPCTSTR)"播放");
+		count = 0;  //更新按钮状态
+		//SetTimer(1, 100, NULL);  //设置定时器
+		//bPause = false; //修改暂停标志位，使暂停
+		SuspendThread(m_hThread);
+	}
 
 	
 
 	
-	run_tld();
+	//run_tld();
 }
 
 
@@ -843,6 +869,7 @@ void Ctld_trackDlg::OnTimer(UINT_PTR nIDEvent)
 {
 	// TODO: 在此添加消息处理程序代码和/或调用默认值
 	if (nIDEvent == 1)
+		//run_tld();
 //	DrawPicToHDC(FrameImg, IDC_PIC_SHOW);
 
 	CDialogEx::OnTimer(nIDEvent);

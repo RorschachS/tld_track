@@ -28,6 +28,7 @@
 
 #include <stdlib.h>
 #include <crtdbg.h>
+#include "afxwin.h"
 
 using namespace std;
 
@@ -54,7 +55,9 @@ public:
 	virtual void DoDataExchange(CDataExchange* pDX);	// DDX/DDV 支持
 
 public:	//自定义函数
-	void run_tld();
+	//void run_tld();
+	//DWORD _stdcall run_tld(LPVOID lpParameter);
+
 	CString FicowGetDirectory();
 	void DrawPicToHDC(IplImage * img, UINT ID);
 
@@ -62,7 +65,7 @@ public:	//自定义函数
 // 实现
 protected:
 	HICON m_hIcon;
-
+	HANDLE m_hThread;
 
 	// 生成的消息映射函数
 	virtual BOOL OnInitDialog();
@@ -80,4 +83,6 @@ public:
 	afx_msg void OnBnClickedAbort();
 	afx_msg void OnTimer(UINT_PTR nIDEvent);
 	
+	// 按钮显示内容
+	CButton m_Enble;
 };
