@@ -1,7 +1,7 @@
 // ================================
 // EvTrackCore.cpp
 // ================================
-
+#include"stdafx.h"
 #include "Track.h"
 #define CV_RGB( r, g, b )  cvScalar( (b), (g), (r), 0 )
 
@@ -616,8 +616,8 @@ bool EvTrackCore::Execute(IplImage* pFrame, long long TimeStamp, int iMotionDire
 		sprintf_s(m_Text, "#UseObjNum : [%d] #CurrObjNum : [%d]", m_UsedObjNum, m_CurrObjNum);
 		cvPutText(m_DrawImage, m_Text, cvPoint(5, 30), &m_Font, CV_RGB(0, 255, 0));
 
-		cvNamedWindow(m_WinName, 1);
-		cvShowImage(m_WinName, m_DrawImage);
+		//cvNamedWindow(m_WinName, 1);
+		//cvShowImage(m_WinName, m_DrawImage);
 		cvWaitKey(1);
 	}
 	else

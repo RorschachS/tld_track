@@ -1,7 +1,7 @@
 // ================================
 // DetecterModule.cpp
 // ================================
-
+#include"stdafx.h"
 #include "DetecterModule.h"
 #include "SingleObject.h"
 

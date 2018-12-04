@@ -1,5 +1,5 @@
 // ******** LK.cpp ********
-
+#include"stdafx.h"
 #include <cv.h>
 #include <float.h>
 #include <stdio.h>

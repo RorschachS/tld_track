@@ -1,7 +1,7 @@
 // ================================
 // ExpertsModule.cpp
 // ================================
-
+#include"stdafx.h"
 #include "ExpertsModule.h"
 
 AmtExpertsModule::AmtExpertsModule()

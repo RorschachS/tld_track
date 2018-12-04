@@ -2,6 +2,7 @@
 // AMT[Adaptive Matching Tracking] -- Tracker and Classifier Fusion
 // ================================================================
 
+#include"stdafx.h"
 #include "AMT.h"
 #include "Track.h"
 
@@ -253,13 +254,15 @@ int AmtCleanObject(EvAMT* pAMT, int iObjID)
 	m_ObjStatus = pAMT->m_ObjStatus;
 	if (iObjIndex >= 0)
 	{
-		assert(m_ObjStatus[iObjIndex].mID == iObjID);
+	    assert(m_ObjStatus[iObjIndex].mID == iObjID);
+		//m_ObjStatus[iObjIndex].mID == iObjID;
 		m_ObjStatus[iObjIndex].mStatus = 0;
 		m_ObjStatus[iObjIndex].mID = -1;
 		m_ObjStatus[iObjIndex].mBbox = cvRect(0, 0, 0, 0);
 		m_ObjStatus[iObjIndex].mPos = cvPoint(0, 0);
 		m_ObjStatus[iObjIndex].mCountMiss = 0;
 		m_ObjStatus[iObjIndex].mUnstableNum = 0;
+
 	}
 
 	return 0;

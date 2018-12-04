@@ -1,7 +1,7 @@
 // ================================
 // TrackerModule.cpp
 // ================================
-
+#include"stdafx.h"
 #include "TrackerModule.h"
 #include <limits>
 

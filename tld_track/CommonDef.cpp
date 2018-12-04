@@ -1,7 +1,7 @@
 // ================================
 // Common Define
 // ================================
-
+#include"stdafx.h"
 #include "CommonDef.h"
 
 

@@ -1,7 +1,7 @@
 // ==============================
 // SingleObject.cpp
 // ==============================
-
+#include"stdafx.h"
 #include "SingleObject.h"
 
 AmtSingleObject::AmtSingleObject()

@@ -19,6 +19,12 @@
     <Filter Include="源文件\tld_track">
       <UniqueIdentifier>{2ef798c2-6041-417a-9ccd-af7ea1d294de}</UniqueIdentifier>
     </Filter>
+    <Filter Include="头文件\encode">
+      <UniqueIdentifier>{44c6454d-9e3b-4c25-99b7-e140243d1600}</UniqueIdentifier>
+    </Filter>
+    <Filter Include="源文件\encode">
+      <UniqueIdentifier>{5ba3f4af-3c63-4e5f-ae1a-37800188747d}</UniqueIdentifier>
+    </Filter>
   </ItemGroup>
   <ItemGroup>
     <Text Include="ReadMe.txt" />
@@ -31,9 +37,6 @@
       <Filter>头文件</Filter>
     </ClInclude>
     <ClInclude Include="stdafx.h">
-      <Filter>头文件</Filter>
-    </ClInclude>
-    <ClInclude Include="targetver.h">
       <Filter>头文件</Filter>
     </ClInclude>
     <ClInclude Include="Resource.h">
@@ -67,6 +70,30 @@
       <Filter>头文件</Filter>
     </ClInclude>
     <ClInclude Include="TextDlg.h">
+      <Filter>头文件</Filter>
+    </ClInclude>
+    <ClInclude Include="targetver.h">
+      <Filter>头文件</Filter>
+    </ClInclude>
+    <ClInclude Include="BASE64_API.h">
+      <Filter>头文件\encode</Filter>
+    </ClInclude>
+    <ClInclude Include="encode.h">
+      <Filter>头文件\encode</Filter>
+    </ClInclude>
+    <ClInclude Include="HMAC_MD5_API.h">
+      <Filter>头文件\encode</Filter>
+    </ClInclude>
+    <ClInclude Include="HMAC_MD5_DATA.h">
+      <Filter>头文件\encode</Filter>
+    </ClInclude>
+    <ClInclude Include="license_warning.h">
+      <Filter>头文件</Filter>
+    </ClInclude>
+    <ClInclude Include="CSendMail.h">
+      <Filter>头文件</Filter>
+    </ClInclude>
+    <ClInclude Include="LabelManager.h">
       <Filter>头文件</Filter>
     </ClInclude>
   </ItemGroup>
@@ -107,10 +134,28 @@
     <ClCompile Include="TrackerModule.cpp">
       <Filter>源文件\tld_track</Filter>
     </ClCompile>
+    <ClCompile Include="TextDlg.cpp">
+      <Filter>源文件</Filter>
+    </ClCompile>
     <ClCompile Include="CvvImage.cpp">
       <Filter>源文件</Filter>
     </ClCompile>
-    <ClCompile Include="TextDlg.cpp">
+    <ClCompile Include="encode.cpp">
+      <Filter>源文件\encode</Filter>
+    </ClCompile>
+    <ClCompile Include="BASE64_API.c">
+      <Filter>源文件\encode</Filter>
+    </ClCompile>
+    <ClCompile Include="HMAC_MD5_API.c">
+      <Filter>源文件\encode</Filter>
+    </ClCompile>
+    <ClCompile Include="license_warning.cpp">
+      <Filter>源文件</Filter>
+    </ClCompile>
+    <ClCompile Include="CSendMail.cpp">
+      <Filter>源文件</Filter>
+    </ClCompile>
+    <ClCompile Include="LabelManager.cpp">
       <Filter>源文件</Filter>
     </ClCompile>
   </ItemGroup>
@@ -123,6 +168,7 @@
     <None Include="res\tld_track.rc2">
       <Filter>资源文件</Filter>
     </None>
+    <None Include="packages.config" />
   </ItemGroup>
   <ItemGroup>
     <Image Include="res\tld_track.ico">
